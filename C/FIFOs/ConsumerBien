@@ -1,0 +1,113 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void main(){
+	//CREAR FIFO
+	int fifoMaker;
+	fifoMaker = mknod("numeros", S_IFIFO|0666, 0);
+
+	if(fifoMaker == -1){
+		printf("Error al crear la fifo\n");
+		exit(-1);
+	}else{
+		//LECTURA DEL FICHERO FIFO Y ALMACENAJE EN EL ARRAY
+		int fifoFile = open("numeros", 0);
+		
+		int posicionActual = 0;
+		int numerosAleatorios[99];
+
+		while(1){
+			char numeroAleatorioActual[20];
+			read(fifoFile, numeroAleatorioActual, 20);	
+
+			if(strchr(numeroAleatorioActual,'*')){
+				break;
+			}
+
+			numerosAleatorios[posicionActual] = atoi(numeroAleatorioActual);
+			posicionActual++;
+
+			//printf("Recibido: %s\n", numeroAleatorioActual);
+		}
+
+		close(fifoFile);
+
+		//LECTURA DE LOS NUMEROS ALMACENADOS EN EL ARRAY
+		printf("NUMEROS:\n");
+		int cantidadNumeros = posicionActual;
+		for(int posicionNumeroActual = 0; posicionNumeroActual < cantidadNumeros; posicionNumeroActual++){
+			printf("Numero %d -> %d\n", posicionNumeroActual, numerosAleatorios[posicionNumeroActual]);
+		}
+		printf("\n");
+
+		//CREACION DE LOS 4 HIJOS	
+		for(int numeroFork = 1; numeroFork <= 4; numeroFork++){
+			if(fork() == 0){
+				switch(numeroFork){
+					case 1: {
+						int sumaNumeros = 0;
+						for(int posicionNumeroActual = 0; posicionNumeroActual < cantidadNumeros; posicionNumeroActual++){
+							sumaNumeros += numerosAleatorios[posicionNumeroActual];
+						}
+
+						sleep(rand() % (5 - 2 + 1) + 2);
+
+						printf("La suma del vector es: %d\n", sumaNumeros);
+
+						exit(0);
+						break;
+					}
+					case 2: {
+						int sumaNumeros = 0;
+						for(int posicionNumeroActual = 0; posicionNumeroActual < cantidadNumeros; posicionNumeroActual++){
+							sumaNumeros += numerosAleatorios[posicionNumeroActual];
+						}
+
+						sleep(rand() % (5 - 2 + 1) + 2);
+
+						int media = sumaNumeros / cantidadNumeros;
+						printf("La media del vector es: %d\n", media);
+
+						exit(0);
+						break;
+					}
+					case 3: {
+						int numeroMayor = 0;
+						for(int posicionNumeroActual = 0; posicionNumeroActual < cantidadNumeros; posicionNumeroActual++){
+							if(numerosAleatorios[posicionNumeroActual] > numeroMayor){
+								numeroMayor = numerosAleatorios[posicionNumeroActual];
+							}
+						}
+
+						sleep(rand() % (5 - 2 + 1) + 2);
+
+						printf("El numero mayor es: %d\n", numeroMayor);
+						exit(0);
+						break;
+					}
+					case 4: {
+						int numeroMenor = 10000000;
+						for(int posicionNumeroActual = 0; posicionNumeroActual < cantidadNumeros; posicionNumeroActual++){
+							if(numerosAleatorios[posicionNumeroActual] < numeroMenor){
+								numeroMenor = numerosAleatorios[posicionNumeroActual];
+							}
+						}
+
+						sleep(rand() % (5 - 2 + 1) + 2);
+
+						printf("El numero menor es: %d\n", numeroMenor);
+						exit(0);
+						break;
+					}
+				}
+			}else{
+				wait(NULL);
+			}
+		}
+	}
+}

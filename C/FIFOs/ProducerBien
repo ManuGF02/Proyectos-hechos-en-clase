@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void main(){
+	//PIDO PARAMETROS PARA NUM ALEATORIOS
+	int tam, min, max, seg;
+	printf("Cantidad de numeros aleatorios: ");
+	scanf("%d", &tam);	
+
+	printf("\nMin rango numero aleatorio: ");
+	scanf("%d", &min);
+
+	printf("\nMax rango numero aleatorio: ");
+	scanf("%d", &max);
+
+	printf("\nNumero de segundos de espera para el siguiente numero: ");
+	scanf("%d", &seg);
+
+	//GENERAR NUMEROS ALEATORIOS
+	int numerosAleatorios[tam];
+	for(int posicionNumeroAleatorio = 0; posicionNumeroAleatorio < tam; posicionNumeroAleatorio++){
+		numerosAleatorios[posicionNumeroAleatorio] = rand() % (max - min + 1) + min;
+	}
+
+	//MANDAR A LA FIFO LOS NUMEROS
+	int fifoFile;
+	fifoFile = open("numeros", 1);
+
+	for(int posicionNumeroAleatorio = 0; posicionNumeroAleatorio < tam; posicionNumeroAleatorio++){
+		char numeroAleatorioActual[20];
+		sprintf(numeroAleatorioActual, "%d", numerosAleatorios[posicionNumeroAleatorio]);
+
+		write(fifoFile, numeroAleatorioActual, 20);
+		//printf("Escribiendo '%s'\n", numeroAleatorioActual);
+
+		sleep(seg);				
+	}
+
+	write(fifoFile, "*", 20);
+	close(fifoFile);
+
+	printf("\nTermino de mandar los numero");
+}
